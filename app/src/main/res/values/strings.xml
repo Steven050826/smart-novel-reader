@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">智能小说阅读器</string>
+    <string name="shelf">书架</string>
+    <string name="my_shelf">我的书架</string>
+    <string name="search">搜索</string>
+    <string name="reading">阅读</string>
+    <string name="settings">设置</string>
+    <string name="search_hint">搜索小说名称或作者</string>
+    <string name="filter_completed">已完结</string>
+    <string name="filter_ongoing">连载中</string>
+    <string name="add_to_shelf">加入书架</string>
+    <string name="remove_from_shelf">移出书架</string>
+    <string name="chapter">章节</string>
+    <string name="progress">进度</string>
+    <string name="continue_reading">继续阅读</string>
+    <string name="no_books_in_shelf">书架空空如也</string>
+    <string name="search_results">搜索结果</string>
+    <string name="no_search_results">暂无搜索结果</string>
+</resources>

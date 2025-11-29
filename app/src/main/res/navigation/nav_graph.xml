@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+android:id="@+id/nav_graph">
+
+app:startDestination="@id/shelfFragment">
+
+<fragment
+    android:id="@+id/shelfFragment"
+    android:name="com.example.smartnovelreader.ui.shelf.ShelfFragment"
+    android:label="@string/shelf"
+    tools:layout="@layout/fragment_shelf" />
+
+<fragment
+    android:id="@+id/searchFragment"
+    android:name="com.example.smartnovelreader.ui.search.SearchFragment"
+    android:label="@string/search"
+    tools:layout="@layout/fragment_search" />
+
+<fragment
+    android:id="@+id/settingsFragment"
+    android:name="com.example.smartnovelreader.ui.settings.SettingsFragment"
+    android:label="@string/settings"
+    tools:layout="@layout/fragment_settings" />
+
+<activity
+    android:id="@+id/readingActivity"
+    android:name="com.example.smartnovelreader.ui.reading.ReadingActivity"
+    android:label="阅读" />
+-->
+</navigation>
