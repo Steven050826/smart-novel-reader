@@ -1,3 +1,4 @@
+// ShelfViewModel.kt
 package com.example.smartnovelreader.ui.shelf
 
 import androidx.lifecycle.ViewModel
@@ -10,7 +11,8 @@ import kotlinx.coroutines.launch
 
 class ShelfViewModel(private val novelRepository: NovelRepository) : ViewModel() {
 
-    val novelsInShelf = novelRepository.getNovelsInShelf()
+    // 需要传入userId来获取对应书架
+    fun getNovelsInShelf(userId: String) = novelRepository.getNovelsInShelf(userId)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -35,10 +37,10 @@ class ShelfViewModel(private val novelRepository: NovelRepository) : ViewModel()
         }
     }
 
-    fun getShelfCount(): Int {
+    fun getShelfCount(userId: String): Int {
         var count = 0
         viewModelScope.launch {
-            count = novelRepository.getShelfCount()
+            count = novelRepository.getShelfCount(userId)
         }
         return count
     }

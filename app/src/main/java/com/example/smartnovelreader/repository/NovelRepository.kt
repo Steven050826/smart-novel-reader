@@ -1,20 +1,21 @@
+// NovelRepository.kt
 package com.example.smartnovelreader.repository
 
 import com.example.smartnovelreader.database.NovelDao
 import com.example.smartnovelreader.database.ReadingProgressDao
 import com.example.smartnovelreader.model.Novel
-import com.example.smartnovelreader.model.Chapter  // 添加这行导入
+import com.example.smartnovelreader.model.Chapter
 import com.example.smartnovelreader.model.ReadingProgress
 import kotlinx.coroutines.flow.Flow
 
-class NovelRepository(//注入数据库访问对象
+class NovelRepository(
     private val novelDao: NovelDao,
     private val chapterRepository: ChapterRepository,
     private val readingProgressDao: ReadingProgressDao
 ) {
 
-    // 书架相关操作
-    fun getNovelsInShelf(): Flow<List<Novel>> = novelDao.getNovelsInShelf()
+    // 书架相关操作 - 按用户隔离
+    fun getNovelsInShelf(userId: String): Flow<List<Novel>> = novelDao.getNovelsInShelfByUser(userId)
 
     suspend fun addToShelf(novel: Novel) {
         novelDao.insertNovel(novel.copy(isInShelf = true))
@@ -28,7 +29,7 @@ class NovelRepository(//注入数据库访问对象
         return novelDao.getNovelById(novelId)?.isInShelf == true
     }
 
-    // 小说相关操作
+    // 其他方法保持不变...
     suspend fun getNovelById(novelId: String): Novel? {
         return novelDao.getNovelById(novelId)
     }
@@ -45,7 +46,7 @@ class NovelRepository(//注入数据库访问对象
         novelDao.updateLastRead(novelId, chapterId)
     }
 
-    // 章节相关操作 - 现在通过 ChapterRepository 进行
+    // 章节相关操作
     fun getChaptersByNovelId(novelId: String) = chapterRepository.getChaptersByNovelId(novelId)
 
     suspend fun getChapterById(chapterId: String) = chapterRepository.getChapterById(chapterId)
@@ -63,7 +64,7 @@ class NovelRepository(//注入数据库访问对象
         readingProgressDao.insertReadingProgress(progress)
     }
 
-    suspend fun getShelfCount(): Int {
-        return novelDao.getShelfCount()
+    suspend fun getShelfCount(userId: String): Int {
+        return novelDao.getShelfCountByUser(userId)
     }
 }

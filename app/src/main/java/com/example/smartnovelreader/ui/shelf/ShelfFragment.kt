@@ -11,12 +11,11 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.smartnovelreader.databinding.FragmentShelfBinding
+import com.example.smartnovelreader.manager.UserManager
 import com.example.smartnovelreader.model.Novel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
-
-
 
 class ShelfFragment : Fragment() {
 
@@ -46,6 +45,10 @@ class ShelfFragment : Fragment() {
     }
 
     private fun setupUI() {
+        // 显示当前用户
+        val currentUser = UserManager(requireContext()).getCurrentUser()
+        //binding.toolbar.title = "${currentUser ?: "用户"}的书架"
+
         // 初始化适配器
         novelAdapter = NovelAdapter(
             onItemClick = { novel ->
@@ -71,15 +74,27 @@ class ShelfFragment : Fragment() {
 
     private fun observeData() {
         lifecycleScope.launch {
-            viewModel.novelsInShelf.collectLatest { novels ->
-                Log.d("ShelfFragment", "书架数据更新: ${novels.size} 本小说")
+            val currentUser = UserManager(requireContext()).getCurrentUser() ?: "default"
+
+            // 获取当前用户的独立书架
+            viewModel.getNovelsInShelf(currentUser).collectLatest { novels ->
+                Log.d("ShelfFragment", "用户${currentUser}的书架数据更新: ${novels.size} 本小说")
+
                 if (novels.isNotEmpty()) {
                     showNovelList()
                     novelAdapter.submitList(novels)
+                    showToast("${getUserDisplayName(currentUser)}的书架 - ${novels.size}本书")
                 } else {
                     showEmptyState()
                 }
             }
+        }
+    }
+    private fun getUserDisplayName(userId: String): String {
+        return when (userId) {
+            "user1" -> "用户A"
+            "user2" -> "用户B"
+            else -> "用户"
         }
     }
 
@@ -93,6 +108,7 @@ class ShelfFragment : Fragment() {
         binding.novelRecyclerView.visibility = View.GONE
     }
 
+    // ShelfFragment.kt - 修改打开小说的逻辑
     private fun openNovel(novel: Novel) {
         Log.d("ShelfFragment", "尝试打开小说: ${novel.title}")
 
@@ -113,8 +129,9 @@ class ShelfFragment : Fragment() {
                 val intent = android.content.Intent(requireContext(), com.example.smartnovelreader.ui.reading.ReadingActivity::class.java).apply {
                     putExtra("file_path", filePath)
                     putExtra("novel_title", novel.title)
+                    // 注意：这里不需要传递用户ID，因为ReadingActivity会自己获取
                 }
-                Log.d("ShelfFragment", "启动ReadingActivity")
+                Log.d("ShelfFragment", "启动ReadingActivity，用户: ${UserManager(requireContext()).getCurrentUser()}")
                 startActivity(intent)
             } else {
                 showToast("小说文件不存在，可能已被删除")
@@ -141,6 +158,7 @@ class ShelfFragment : Fragment() {
     }
 
     private fun showNovelDetails(novel: Novel) {
+        val currentUser = UserManager(requireContext()).getCurrentUser()
         val details = """
             标题: ${novel.title}
             作者: ${novel.author}
@@ -149,6 +167,7 @@ class ShelfFragment : Fragment() {
             字数: ${novel.wordCount}
             总章节: ${novel.totalChapters}
             文件路径: ${novel.coverUrl ?: "未知"}
+            当前用户: $currentUser
         """.trimIndent()
 
         AlertDialog.Builder(requireContext())
@@ -219,27 +238,29 @@ class ShelfFragment : Fragment() {
 
             // 解析文件信息
             val novelInfo = parseTxtFile(file)
+            val currentUser = UserManager(requireContext()).getCurrentUser() ?: "default"
 
             // 创建小说对象
             val novel = Novel(
                 id = "local_${file.nameWithoutExtension}_${System.currentTimeMillis()}",
                 title = novelInfo.title,
                 author = novelInfo.author,
-                coverUrl = file.absolutePath, // 使用文件路径作为coverUrl
+                coverUrl = file.absolutePath,
                 description = novelInfo.description,
                 category = "本地导入",
                 status = "已完结",
                 source = "本地文件",
-                totalChapters = 1, // 单文件视为1章
-                wordCount = file.length(), // 使用文件大小作为字数估算
+                totalChapters = 1,
+                wordCount = file.length(),
                 lastReadTime = System.currentTimeMillis(),
-                isInShelf = true
+                isInShelf = true,
+                userId = currentUser // 设置用户ID
             )
 
-            Log.d("ShelfFragment", "创建小说对象: ${novel.title}, 路径: ${novel.coverUrl}")
+            Log.d("ShelfFragment", "为用户${currentUser}创建小说对象: ${novel.title}")
 
             viewModel.addToShelf(novel)
-            showToast("《${novelInfo.title}》已添加到书架")
+            showToast("《${novelInfo.title}》已添加到${getUserDisplayName(currentUser)}的书架")
 
         } catch (e: Exception) {
             Log.e("ShelfFragment", "处理TXT文件失败", e)
@@ -302,22 +323,30 @@ class ShelfFragment : Fragment() {
     }
 
     private fun addSampleNovel() {
+        val currentUser = UserManager(requireContext()).getCurrentUser() ?: "default"
+        val (bookTitle, authorName) = when (currentUser) {
+            "user1" -> Pair("用户A的书籍1", "作者A")
+            "user2" -> Pair("用户B的书籍1", "作者B")
+            else -> Pair("示例书籍", "未知作者")
+        }
+
         val sampleNovel = Novel(
-            id = "novel_${System.currentTimeMillis()}",
-            title = "示例小说",
-            author = "示例作者",
-            description = "这是一个示例小说描述",
-            category = "玄幻",
+            id = "novel_${currentUser}_${System.currentTimeMillis()}",
+            title = bookTitle,
+            author = authorName,
+            description = "这是${getUserDisplayName(currentUser)}的专属书籍",
+            category = "专属",
             status = "连载中",
             source = "本地",
             totalChapters = 100,
             wordCount = 500000L,
             lastReadTime = System.currentTimeMillis(),
-            isInShelf = true
+            isInShelf = true,
+            userId = currentUser // 设置用户ID
         )
 
         viewModel.addToShelf(sampleNovel)
-        showToast("已添加示例小说到书架")
+        showToast("已为${getUserDisplayName(currentUser)}添加专属书籍")
     }
 
     private fun showToast(message: String) {

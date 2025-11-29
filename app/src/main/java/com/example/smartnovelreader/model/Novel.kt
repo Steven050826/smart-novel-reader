@@ -1,3 +1,4 @@
+// Novel.kt
 package com.example.smartnovelreader.model
 
 import androidx.room.Entity
@@ -18,7 +19,8 @@ data class Novel(
     val isInShelf: Boolean = false,
     val totalChapters: Int = 0,
     val lastUpdateTime: Long = System.currentTimeMillis(),
-    val wordCount: Long = 0 // 字数统计
+    val wordCount: Long = 0, // 字数统计
+    val userId: String = "" // 新增：用户ID字段
 ) {
     // 获取阅读进度百分比
     fun getProgressPercentage(currentChapter: Int): Float {

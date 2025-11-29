@@ -1,7 +1,7 @@
-// SettingsFragment.kt
 package com.example.smartnovelreader.ui.settings
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
@@ -17,6 +17,8 @@ import android.view.View
 import android.view.ViewGroup
 import com.example.smartnovelreader.databinding.FragmentSettingsBinding
 import com.example.smartnovelreader.manager.SettingsManager
+import com.example.smartnovelreader.manager.UserManager
+import com.example.smartnovelreader.ui.login.LoginActivity
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
@@ -68,6 +70,9 @@ class SettingsFragment : Fragment() {
     }
 
     private fun setupUI() {
+        // 设置用户信息
+        setupUserSection()
+
         // 设置开关监听
         binding.switchDarkMode.setOnCheckedChangeListener { _, isChecked ->
             lifecycleScope.launch {
@@ -144,6 +149,62 @@ class SettingsFragment : Fragment() {
         binding.btnTestSensor.setOnClickListener {
             testLightSensor()
         }
+    }
+
+    private fun setupUserSection() {
+        // 显示当前用户信息
+        val currentUser = UserManager(requireContext()).getCurrentUser()
+        val displayName = when (currentUser) {
+            "user1" -> "用户A"
+            "user2" -> "用户B"
+            else -> "未登录"
+        }
+        binding.tvCurrentUser.text = "当前用户: $displayName"
+
+        // 退出登录按钮
+        binding.btnLogout.setOnClickListener {
+            showLogoutConfirmation()
+        }
+    }
+
+    private fun showLogoutConfirmation() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("退出登录")
+            .setMessage("确定要退出当前账号吗？")
+            .setPositiveButton("确定") { _, _ ->
+                logout()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    // SettingsFragment.kt - 修改退出登录的逻辑
+    private fun logout() {
+        val userManager = UserManager(requireContext())
+        val currentUser = userManager.getCurrentUser()
+
+        // 清除用户状态
+        userManager.clearUser()
+
+        // 可以在这里清除该用户的临时数据（如果需要）
+        lifecycleScope.launch {
+            try {
+                val readingProgressManager = (requireActivity().application as com.example.smartnovelreader.SmartNovelReaderApp)
+                    .appContainer.readingProgressManager
+                // 清除该用户的阅读进度缓存（可选）
+                // readingProgressManager.clearAllProgress(currentUser ?: "")
+            } catch (e: Exception) {
+                Log.e("SettingsFragment", "清除用户数据失败", e)
+            }
+        }
+
+        // 跳转到登录页面
+        val intent = Intent(requireContext(), LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
+        requireActivity().finish()
+
+        showToast("已退出登录")
     }
 
     private fun observeSettings() {

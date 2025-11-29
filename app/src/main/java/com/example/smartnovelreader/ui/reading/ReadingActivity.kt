@@ -27,8 +27,10 @@ import java.io.FileInputStream
 import java.nio.charset.Charset
 import android.os.Handler
 import android.os.Looper
+import com.example.smartnovelreader.manager.UserManager
 
 class ReadingActivity : AppCompatActivity(), VoiceControlManager.VoiceControlListener {
+    private var currentUserId: String = ""
     private lateinit var binding: ActivityReadingBinding
     private lateinit var voiceControlManager: VoiceControlManager
     private lateinit var settingsManager: SettingsManager
@@ -70,10 +72,15 @@ class ReadingActivity : AppCompatActivity(), VoiceControlManager.VoiceControlLis
             binding = ActivityReadingBinding.inflate(layoutInflater)
             setContentView(binding.root)
 
+            // 获取当前用户ID
+            val userManager = UserManager(this)
+            currentUserId = userManager.getCurrentUser() ?: "default"
+            Log.d("ReadingActivity", "当前用户ID: $currentUserId")
+
             // 获取传递的文件路径和小说标题
             currentFilePath = intent.getStringExtra("file_path") ?: ""
             currentNovelTitle = intent.getStringExtra("novel_title") ?: "未知小说"
-            Log.d("ReadingActivity", "接收到的参数 - 文件路径: $currentFilePath, 标题: $currentNovelTitle")
+            Log.d("ReadingActivity", "接收到的参数 - 文件路径: $currentFilePath, 标题: $currentNovelTitle, 用户: $currentUserId")
 
             // 初始化设置管理器
             settingsManager = SettingsManager(this)
@@ -463,9 +470,9 @@ class ReadingActivity : AppCompatActivity(), VoiceControlManager.VoiceControlLis
                 val readingProgressManager = (application as com.example.smartnovelreader.SmartNovelReaderApp)
                     .appContainer.readingProgressManager
 
-                // 只保存页码，每本书独立保存
-                readingProgressManager.saveReadingProgress(currentFilePath, currentPage)
-                Log.d("ReadingActivity", "保存阅读进度: 文件 $currentFilePath, 页码 $currentPage")
+                // 保存阅读进度，传入用户ID
+                readingProgressManager.saveReadingProgress(currentFilePath, currentPage, currentUserId)
+                Log.d("ReadingActivity", "保存阅读进度: 用户 $currentUserId, 文件 $currentFilePath, 页码 $currentPage")
             }
         } catch (e: Exception) {
             Log.e("ReadingActivity", "保存阅读进度失败", e)
@@ -497,16 +504,16 @@ class ReadingActivity : AppCompatActivity(), VoiceControlManager.VoiceControlLis
                 val readingProgressManager = (application as com.example.smartnovelreader.SmartNovelReaderApp)
                     .appContainer.readingProgressManager
 
-                // 获取当前文件的保存进度
-                val savedProgress = readingProgressManager.getSavedProgress(currentFilePath)
-                Log.d("ReadingActivity", "恢复阅读进度: 文件 ${savedProgress.lastReadFile}, 页码 ${savedProgress.scrollPosition}")
+                // 获取当前用户的保存进度
+                val savedProgress = readingProgressManager.getSavedProgress(currentFilePath, currentUserId)
+                Log.d("ReadingActivity", "恢复阅读进度: 用户 $currentUserId, 文件 ${savedProgress.lastReadFile}, 页码 ${savedProgress.scrollPosition}")
 
                 if (savedProgress.scrollPosition in 0 until totalPages) {
                     showPage(savedProgress.scrollPosition)
-                    Log.d("ReadingActivity", "成功恢复阅读进度到第 ${savedProgress.scrollPosition} 页")
+                    Log.d("ReadingActivity", "成功恢复用户 $currentUserId 的阅读进度到第 ${savedProgress.scrollPosition} 页")
                 } else {
                     showPage(0)
-                    Log.d("ReadingActivity", "无有效进度，从第 0 页开始")
+                    Log.d("ReadingActivity", "用户 $currentUserId 无有效进度，从第 0 页开始")
                 }
             } catch (e: Exception) {
                 Log.e("ReadingActivity", "恢复阅读进度失败", e)

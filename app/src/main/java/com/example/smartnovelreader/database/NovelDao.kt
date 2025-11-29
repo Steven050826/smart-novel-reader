@@ -1,3 +1,4 @@
+// NovelDao.kt
 package com.example.smartnovelreader.database
 
 import androidx.room.*
@@ -7,9 +8,8 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface NovelDao {
 
-
-    @Query("SELECT * FROM novels WHERE isInShelf = 1 ORDER BY lastReadTime DESC")
-    fun getNovelsInShelf(): Flow<List<Novel>>
+    @Query("SELECT * FROM novels WHERE isInShelf = 1 AND userId = :userId ORDER BY lastReadTime DESC")
+    fun getNovelsInShelfByUser(userId: String): Flow<List<Novel>>
 
     @Query("SELECT * FROM novels WHERE id = :novelId")
     suspend fun getNovelById(novelId: String): Novel?
@@ -32,6 +32,6 @@ interface NovelDao {
     @Query("DELETE FROM novels WHERE id = :novelId")
     suspend fun deleteNovel(novelId: String)
 
-    @Query("SELECT COUNT(*) FROM novels WHERE isInShelf = 1")
-    suspend fun getShelfCount(): Int
+    @Query("SELECT COUNT(*) FROM novels WHERE isInShelf = 1 AND userId = :userId")
+    suspend fun getShelfCountByUser(userId: String): Int
 }

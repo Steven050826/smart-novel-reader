@@ -10,13 +10,12 @@ import com.example.smartnovelreader.model.ReadingProgress
 
 @Database(
     entities = [Novel::class, Chapter::class, ReadingProgress::class],
-    version = 1,
+    version = 2, // 版本号从1升级到2
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun novelDao(): NovelDao
-    // 声明抽象方法，返回 NovelDao 数据访问对象
     abstract fun chapterDao(): ChapterDao
     abstract fun readingProgressDao(): ReadingProgressDao
 
@@ -30,7 +29,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "smart_novel_reader.db"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration() // 使用这个来简单处理迁移，会清空旧数据
+                    .build()
                 INSTANCE = instance
                 instance
             }
